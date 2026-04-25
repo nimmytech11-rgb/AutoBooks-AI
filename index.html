@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoBooks AI — Smarter Finance. Automated.</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--surface:#0f0f0f;--surface2:#161616;--surface3:#1e1e1e;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --gold:#C9A84C;--gold2:#E8C97A;--gold3:#8B6520;
+  --gold-metal:linear-gradient(135deg,#5C4010 0%,#9A7228 20%,#C9A84C 35%,#F5E0A0 50%,#C9A84C 65%,#9A7228 80%,#5C4010 100%);
+  --text:#EDE8DC;--text2:#8A8070;--text3:#4A4438;
+  --red:#E74C3C;--green:#4CAF7D;--radius:4px;--radius-md:8px;
+}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* SCREENS */
+.screen{display:none;min-height:100vh;flex-direction:column;position:relative;z-index:1}
+.screen.active{display:flex}
+
+/* LOADING */
+#loading-overlay{position:fixed;inset:0;background:rgba(8,8,8,0.95);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#loading-overlay.show{display:flex}
+.ld-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;background:var(--gold-metal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:5px}
+.ld-sub{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:2px}
+.ld-dots{display:flex;gap:6px}
+.ld-dots span{width:6px;height:6px;border-radius:50%;background:var(--gold3);animation:ldbounce 1.2s infinite}
+.ld-dots span:nth-child(2){animation-delay:.2s}.ld-dots span:nth-child(3){animation-delay:.4s}
+@keyframes ldbounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* 2FA MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:8000;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-radius:var(--radius-md);padding:36px;max-width:380px;width:90%;text-align:center;position:relative}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-metal);border-radius:var(--radius-md) var(--radius-md) 0 0}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;margin-bottom:8px}
+.modal-sub{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.7;margin-bottom:22px}
+
+
+.code-input:focus{border-color:var(--gold)}
+
+/* CONFIRM MODAL */
+#confirm-modal .modal-box{max-width:340px}
+.confirm-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:8px}
+.confirm-sub{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.7;margin-bottom:22px}
+.confirm-btns{display:flex;gap:10px}
+
+/* MASTHEAD — APEX */
+.masthead{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:0 40px;
+  height:68px;
+  border-bottom:1px solid rgba(201,168,76,0.15);
+  background:linear-gradient(180deg,rgba(4,3,1,0.99),rgba(8,8,8,0.97));
+  backdrop-filter:blur(20px);
+  position:relative;flex-shrink:0;z-index:100;
+}
+.masthead::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--gold-metal);opacity:0.55}
+.apex-brand{display:flex;align-items:center;gap:0;cursor:pointer;text-decoration:none}
+.apex-logo-img{height:46px;width:auto;object-fit:contain;mix-blend-mode:screen;filter:brightness(1.05) saturate(1.1)}
+.apex-wordmark{display:flex;flex-direction:column;line-height:1}
+.apex-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;font-weight:700;letter-spacing:5px;
+  background:linear-gradient(135deg,#8B6520 0%,#C9A84C 40%,#F0D98A 55%,#C9A84C 70%,#8B6520 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-transform:uppercase;line-height:1.1;
+}
+.apex-sub{
+  font-size:8px;font-weight:500;letter-spacing:4px;
+  color:#8B6520;text-transform:uppercase;margin-top:1px;
+  font-family:'Rajdhani',sans-serif;
+}
+.masthead-divider{width:1px;height:24px;background:linear-gradient(180deg,transparent,rgba(201,168,76,0.25),transparent);margin:0 24px}
+.product-name-mast{
+  font-size:12px;font-weight:600;letter-spacing:6px;
+  text-transform:uppercase;
+  background:linear-gradient(135deg,#5C4010 0%,#9A7228 20%,#C9A84C 35%,#F5E0A0 50%,#C9A84C 65%,#9A7228 80%,#5C4010 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-family:'Cormorant Garamond',serif;
+}
+.masthead-right{display:flex;align-items:center;gap:12px;}
+
+/* BUTTONS */
+.btn-gold{background:var(--gold-metal);color:#1a1000;border:none;border-radius:var(--radius);padding:9px 22px;font-size:12px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline-gold{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,0.35);border-radius:var(--radius);padding:8px 20px;font-size:12px;font-weight:600;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-outline-gold:hover{border-color:var(--gold);background:rgba(201,168,76,0.06)}
+.btn-gold-lg{background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius);padding:15px 36px;font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-gold-lg:hover{filter:brightness(1.12);transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,0.2)}
+.btn-ghost-lg{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,0.3);border-radius:var(--radius);padding:14px 34px;font-size:13px;font-weight:600;font-family:'Rajdhani',sans-serif;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-ghost-lg:hover{border-color:var(--gold);background:rgba(201,168,76,0.05)}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.25);border-radius:var(--radius);padding:9px 20px;font-size:12px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-danger:hover{background:rgba(231,76,60,0.18);border-color:rgba(231,76,60,0.4)}
+
+/* HERO / LANDING */
+
+
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 40px 56px;position:relative}
+.hero-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.05) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+/* AutoBooks AI logo as hero image */
+
+
+.hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(201,168,76,0.25);border-radius:2px;padding:6px 18px;font-size:10px;font-weight:600;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:24px;animation:fadeUp .8s .05s ease both}
+.hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5.5vw,70px);font-weight:700;line-height:1.05;letter-spacing:-1px;margin-bottom:6px;animation:fadeUp .8s .1s ease both}
+.hero-title-gold{background:var(--gold-metal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:15px;color:var(--text2);max-width:480px;line-height:1.8;margin-bottom:44px;animation:fadeUp .8s .2s ease both;font-family:'DM Mono',monospace;font-weight:300}
+.hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .3s ease both;margin-bottom:56px}
+.stats-row{display:flex;gap:44px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .4s ease both}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;background:var(--gold-metal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:3px;font-family:'DM Mono',monospace}
+.features-strip{display:flex;border-top:1px solid rgba(201,168,76,0.1)}
+.feat-item{flex:1;padding:26px 28px;border-right:1px solid rgba(201,168,76,0.07);transition:background .2s}
+.feat-item:last-child{border-right:none}
+.feat-item:hover{background:rgba(201,168,76,0.03)}
+.feat-icon{font-size:18px;margin-bottom:10px;display:block}
+.feat-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;color:var(--gold)}
+.feat-desc{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.7}
+
+/* AUTH */
+.center-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.card{background:var(--surface);border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius-md);padding:36px;width:100%;max-width:420px;position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-metal);border-radius:var(--radius-md) var(--radius-md) 0 0}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.card-sub{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:22px;letter-spacing:.5px}
+.auth-tabs{display:flex;border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.auth-tab{flex:1;padding:9px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2);border:none;background:none;font-family:'Rajdhani',sans-serif;text-align:center;transition:all .2s;letter-spacing:1.5px;text-transform:uppercase}
+.auth-tab.active{background:rgba(201,168,76,0.1);color:var(--gold)}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;font-family:'DM Mono',monospace;text-transform:uppercase}
+.field input,.field select,.field textarea{background:var(--surface2);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius);padding:11px 14px;color:var(--text);font-size:14px;font-family:'Rajdhani',sans-serif;font-weight:500;outline:none;width:100%;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(201,168,76,0.4)}
+.field select option,.field textarea{background:var(--surface2)}
+.field textarea{resize:vertical;min-height:80px;font-size:13px}
+.msg-err{background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:#E74C3C;font-family:'DM Mono',monospace;margin-bottom:12px;display:none}
+.msg-ok{background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:#4CAF7D;font-family:'DM Mono',monospace;margin-bottom:12px;display:none}
+.big-btn{width:100%;background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius);padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;margin-top:6px;transition:all .2s}
+.big-btn:hover{filter:brightness(1.1)}
+.big-btn:disabled{opacity:.5;cursor:not-allowed}
+.trial-note{background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius);padding:11px 14px;font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;line-height:1.7;margin-top:14px;text-align:center}
+
+/* ONBOARDING */
+.progress-bar{height:2px;background:var(--surface3);border-radius:1px;margin-bottom:26px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold-metal);border-radius:1px;transition:width .4s}
+.ob-step-label{font-size:10px;color:var(--gold3);font-family:'DM Mono',monospace;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.ob-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;margin-bottom:6px}
+.ob-sub{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:20px;line-height:1.7}
+.option-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.opt{padding:13px;background:var(--surface2);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius);cursor:pointer;transition:all .2s}
+.opt:hover{border-color:rgba(201,168,76,0.25)}
+.opt.chosen{border-color:var(--gold);background:rgba(201,168,76,0.06)}
+.opt-icon{font-size:18px;margin-bottom:6px}
+.opt-label{font-size:13px;font-weight:700}
+.opt-desc{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px}
+.back-btn{width:100%;background:transparent;color:var(--text2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Rajdhani',sans-serif;margin-top:8px;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
+.back-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.15)}
+.summary-box{background:var(--surface2);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:2.1}
+
+/* APP NAV */
+.app-nav{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:48px;border-bottom:1px solid rgba(201,168,76,0.08);background:rgba(8,8,8,0.98);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100;flex-shrink:0}
+.app-tabs{display:flex;gap:2px}
+.tab{padding:6px 13px;border-radius:var(--radius);font-size:11px;font-weight:700;cursor:pointer;color:var(--text2);border:none;background:none;font-family:'Rajdhani',sans-serif;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
+.tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.tab.active{color:var(--gold);background:rgba(201,168,76,0.08)}
+.user-pill{display:flex;align-items:center;gap:8px;border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius);padding:3px 12px 3px 3px;cursor:pointer;transition:border-color .2s}
+.user-pill:hover{border-color:rgba(201,168,76,0.3)}
+.u-avatar{width:28px;height:28px;border-radius:2px;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:1px;overflow:hidden;flex-shrink:0}
+.u-avatar img{width:100%;height:100%;object-fit:cover}
+.u-name{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:1px;font-family:'Rajdhani',sans-serif;text-transform:uppercase}
+
+/* APP BODY */
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:220px;border-right:1px solid rgba(201,168,76,0.07);padding:18px 12px;flex-shrink:0;overflow-y:auto}
+.sb-section{margin-bottom:22px}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--text3);margin-bottom:7px;font-family:'DM Mono',monospace;text-transform:uppercase;padding:0 4px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .15s;margin-bottom:1px;letter-spacing:.5px;font-family:'Rajdhani',sans-serif;text-transform:uppercase}
+.sb-item:hover{background:rgba(201,168,76,0.05);color:var(--text)}
+.sb-item.active{background:rgba(201,168,76,0.08);color:var(--gold)}
+.sb-dot{width:6px;height:6px;border-radius:1px;flex-shrink:0}
+.main{flex:1;padding:26px 30px;overflow-y:auto;max-height:calc(100vh - 120px)}
+.page{display:none}
+.page.active{display:block}
+
+/* DASHBOARD */
+.dash-hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.dash-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;letter-spacing:-.5px}
+.dash-sub{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:3px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:17px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--gold-metal);opacity:.3}
+.kpi:hover{border-color:rgba(201,168,76,0.2)}
+.kpi-lbl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:7px;letter-spacing:1.5px;text-transform:uppercase}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
+.kpi-note{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)}
+.gold-text{background:var(--gold-metal);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.up{color:var(--green)}.dn{color:var(--red)}
+.two-col{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.panel{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:17px;margin-bottom:16px}
+.panel:last-child{margin-bottom:0}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold3);font-family:'Rajdhani',sans-serif}
+.panel-action{font-size:11px;color:var(--gold);cursor:pointer;font-weight:600;letter-spacing:1px}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:90px}
+.bg{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.bw{display:flex;gap:2px;align-items:flex-end;height:72px}
+.b{width:8px;border-radius:2px 2px 0 0}
+.b.inc{background:linear-gradient(180deg,var(--gold2),var(--gold3))}
+.b.exp{background:var(--surface3);border:1px solid rgba(255,255,255,0.05)}
+.b-lbl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace}
+.cat-list{display:flex;flex-direction:column;gap:7px}
+.cat-item{display:flex;flex-direction:column;gap:3px}
+.cat-row{display:flex;justify-content:space-between}
+.cat-name{font-size:11px;font-weight:700;font-family:'Rajdhani',sans-serif;text-transform:uppercase}
+.cat-amt{font-size:10px;font-family:'DM Mono',monospace;color:var(--text2)}
+.cat-bar-bg{height:2px;background:var(--surface3);border-radius:1px;overflow:hidden}
+.cat-fill{height:100%;border-radius:1px}
+.ai-panel{background:linear-gradient(135deg,rgba(201,168,76,0.04),rgba(10,8,4,0.8));border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius-md);padding:17px;margin-bottom:16px}
+.ai-lbl{display:flex;align-items:center;gap:8px;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;font-family:'DM Mono',monospace}
+.ai-ins-list{display:flex;flex-direction:column;gap:7px}
+.ai-ins{display:flex;gap:9px;font-size:13px;color:var(--text2);line-height:1.55;font-family:'Rajdhani',sans-serif;font-weight:500}
+.ai-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px}
+.tx-list{display:flex;flex-direction:column;gap:1px}
+.tx-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius);cursor:pointer;transition:background .15s}
+.tx-item:hover{background:rgba(201,168,76,0.04)}
+.tx-icon{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Rajdhani',sans-serif}
+.tx-cat{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace}
+.tx-amt{font-size:13px;font-weight:700;font-family:'DM Mono',monospace}
+.tx-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.tag{display:inline-flex;font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;font-family:'DM Mono',monospace;letter-spacing:.5px;text-transform:uppercase}
+.tag-in{background:rgba(76,175,125,0.12);color:var(--green)}
+.tag-ex{background:rgba(231,76,60,0.1);color:var(--red)}
+.empty-state{text-align:center;padding:56px 20px}
+.empty-icon{font-size:38px;margin-bottom:12px;opacity:.35}
+.empty-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:8px}
+.empty-desc{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.8;margin-bottom:22px}
+
+/* TRANSACTIONS */
+.type-toggle{display:flex;gap:8px;margin-bottom:12px}
+.type-btn{flex:1;padding:9px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;color:var(--text2);background:transparent;transition:all .2s;letter-spacing:1.5px;text-transform:uppercase}
+.type-btn.inc-active{background:rgba(76,175,125,0.08);border-color:rgba(76,175,125,0.3);color:var(--green)}
+.type-btn.exp-active{background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.3);color:var(--red)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.submit-btn{width:100%;background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius);padding:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;margin-top:12px;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+.submit-btn:hover{filter:brightness(1.1)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* AI ADVISOR */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 270px);min-height:340px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px 0;display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:10px;max-width:84%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:var(--radius);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Rajdhani',sans-serif}
+.av-ai{background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.2)}
+.av-user{background:var(--surface3);color:var(--text2);border:1px solid rgba(255,255,255,0.06)}
+.bubble{padding:10px 14px;border-radius:var(--radius-md);font-size:13px;line-height:1.65;font-family:'Rajdhani',sans-serif;font-weight:500}
+.b-ai{background:var(--surface2);border:1px solid rgba(201,168,76,0.1);border-radius:2px var(--radius-md) var(--radius-md) var(--radius-md);color:var(--text)}
+.b-user{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:var(--radius-md) 2px var(--radius-md) var(--radius-md)}
+.chat-in-wrap{display:flex;gap:8px;padding-top:12px;border-top:1px solid rgba(201,168,76,0.1)}
+.chat-in{flex:1;background:var(--surface2);border:1px solid rgba(201,168,76,0.12);border-radius:var(--radius-md);padding:12px 15px;color:var(--text);font-size:14px;font-family:'Rajdhani',sans-serif;font-weight:500;outline:none;resize:none;transition:border-color .2s}
+.chat-in:focus{border-color:rgba(201,168,76,0.3)}
+.chat-send{background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius-md);width:46px;font-size:18px;cursor:pointer;font-weight:700;transition:all .2s}
+.chat-send:hover{filter:brightness(1.1)}
+.typing{display:flex;gap:4px;align-items:center;padding:2px 0}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--gold3);animation:ldbounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+.suggestions{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.sug{background:transparent;border:1px solid rgba(201,168,76,0.14);border-radius:var(--radius);padding:5px 13px;font-size:11px;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;transition:all .2s}
+.sug:hover{border-color:rgba(201,168,76,0.4);color:var(--gold)}
+.advisor-note{background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.12);border-radius:var(--radius);padding:10px 14px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6}
+
+/* REPORTS */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rcard{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:18px;cursor:pointer;transition:all .2s}
+.rcard:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-2px)}
+.rcard-icon{font-size:22px;margin-bottom:10px}
+.rcard-name{font-size:14px;font-weight:700;margin-bottom:4px;font-family:'Rajdhani',sans-serif}
+.rcard-desc{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.7}
+.pro-tag{display:inline-block;margin-top:10px;font-size:9px;padding:3px 10px;border-radius:2px;background:rgba(201,168,76,0.1);color:var(--gold);font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+
+/* PROFILE PAGE */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.profile-section{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:20px}
+.profile-section-full{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:20px;margin-bottom:16px}
+.ps-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold3);font-family:'Rajdhani',sans-serif;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,0.08)}
+.avatar-upload{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.avatar-preview{width:72px;height:72px;border-radius:var(--radius-md);background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--gold);font-family:'Rajdhani',sans-serif;overflow:hidden;flex-shrink:0}
+.avatar-preview img{width:100%;height:100%;object-fit:cover}
+.upload-btn{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,0.25);border-radius:var(--radius);padding:7px 16px;font-size:11px;font-weight:600;font-family:'Rajdhani',sans-serif;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.upload-btn:hover{border-color:var(--gold);background:rgba(201,168,76,0.05)}
+.upload-hint{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px}
+.save-btn{background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius);padding:10px 22px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;transition:all .2s;margin-top:14px}
+.save-btn:hover{filter:brightness(1.1)}
+.danger-zone{background:rgba(231,76,60,0.04);border:1px solid rgba(231,76,60,0.15);border-radius:var(--radius-md);padding:20px;margin-bottom:16px}
+.dz-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-family:'Rajdhani',sans-serif;margin-bottom:8px}
+.dz-desc{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.6;margin-bottom:14px}
+
+
+
+
+
+
+/* UPGRADE */
+.paywall{text-align:center;padding:30px;max-width:520px;margin:0 auto}
+.pw-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;margin-bottom:8px}
+.pw-sub{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.8;margin-bottom:10px}
+.trial-banner{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius);padding:10px 16px;font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:22px}
+.plan-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.plan-card{background:var(--surface);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius-md);padding:20px;text-align:left;cursor:pointer;transition:all .2s;position:relative}
+.plan-card.chosen{border-color:var(--gold);background:rgba(201,168,76,0.04)}
+.plan-card.chosen::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-metal);border-radius:var(--radius-md) var(--radius-md) 0 0}
+.plan-badge{position:absolute;top:-1px;right:14px;font-size:9px;background:var(--gold-metal);color:#0d0900;padding:3px 10px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:1px;text-transform:uppercase}
+.plan-name{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:2px;margin-bottom:7px;font-family:'DM Mono',monospace;text-transform:uppercase}
+.plan-price{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.plan-per{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:12px}
+.plan-feats{display:flex;flex-direction:column;gap:5px}
+.plan-feat{font-size:11px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-weight:500}
+.plan-feat::before{content:'✓ ';color:var(--gold);font-weight:700}
+.stripe-btn{width:100%;background:var(--gold-metal);color:#0d0900;border:none;border-radius:var(--radius);padding:14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+.stripe-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,0.15)}
+.cancel-note{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:8px}
+.secure-note{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:5px}
+
+@media(max-width:720px){
+  .masthead{padding:0 16px;height:60px}
+  .apex-name{font-size:16px;letter-spacing:4px}
+  .apex-sub,.product-name-mast,.masthead-divider{display:none}
+  .hero{padding:40px 20px 36px}
+  
+  .hero-title{font-size:34px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .two-col,.report-grid,.form-grid,.plan-cards,.option-grid,.profile-grid{grid-template-columns:1fr}
+  .features-strip{flex-direction:column}
+  .feat-item{border-right:none;border-bottom:1px solid rgba(201,168,76,0.07)}
+  .sidebar{display:none}
+  .main{padding:14px}
+  .app-tabs .tab{padding:5px 7px;font-size:9px}
+  .chat-wrap{height:calc(100vh - 230px)}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="ld-title">APEX</div>
+  <div class="ld-dots"><span></span><span></span><span></span></div>
+  <div class="ld-sub" id="ld-msg">Connecting...</div>
+</div>
+
+<!-- 2FA MODAL -->
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" id="confirm-modal">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-sub" id="confirm-sub">This action cannot be undone.</div>
+    <div class="msg-err" id="confirm-err"></div>
+    <div class="field"><label>Type your password to confirm</label><input type="password" id="confirm-pw" placeholder="Your password" /></div>
+    <div class="confirm-btns">
+      <button class="btn-danger" style="flex:1" onclick="confirmDelete()">Delete My Account</button>
+      <button class="btn-outline-gold" style="flex:1" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LANDING ═══ -->
+<div id="s-landing" class="screen active">
+  <div class="masthead">
+    <div class="apex-brand" onclick="go('s-landing')">
+      
+      <div class="apex-wordmark">
+        <div class="apex-name">APEX</div>
+        <div class="apex-sub">Technologies</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center">
+      <div class="masthead-divider"></div>
+      <div class="product-name-mast">AutoBooks AI</div>
+    </div>
+    <div class="masthead-right" style="justify-self:end">
+      <button class="btn-outline-gold" onclick="go('s-auth');authMode('login')">Log In</button>
+      <button class="btn-gold" onclick="go('s-auth');authMode('signup')">Get Started</button>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-badge">Smarter Finance. Automated.</div>
+    <h1 class="hero-title">Your books.<br><span class="hero-title-gold">Done automatically.</span></h1>
+    <p class="hero-sub">AutoBooks AI categorizes expenses, tracks income, generates P&L reports, and delivers AI-powered financial insights — zero manual entry required.</p>
+    <div class="hero-actions">
+      <button class="btn-gold-lg" onclick="go('s-auth');authMode('signup')">Start Free — No Card Needed</button>
+      <button class="btn-ghost-lg" onclick="go('s-auth');authMode('login')">Log In →</button>
+    </div>
+    <div class="stats-row">
+      <div><div class="stat-num">$0</div><div class="stat-label">To get started</div></div>
+      <div><div class="stat-num">3 mo.</div><div class="stat-label">Free trial</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">AI automated</div></div>
+      <div><div class="stat-num">59M+</div><div class="stat-label">Freelancers need this</div></div>
+    </div>
+  </div>
+  <div class="features-strip">
+    <div class="feat-item"><span class="feat-icon">🧾</span><div class="feat-title">Auto-Categorization</div><div class="feat-desc">AI reads and sorts every transaction instantly</div></div>
+    <div class="feat-item"><span class="feat-icon">📊</span><div class="feat-title">P&L Reports</div><div class="feat-desc">Real-time profit & loss, always current</div></div>
+    <div class="feat-item"><span class="feat-icon">🤖</span><div class="feat-title">AI Advisor</div><div class="feat-desc">Answers based on your real data</div></div>
+    <div class="feat-item"><span class="feat-icon">💰</span><div class="feat-title">Tax-Ready Exports</div><div class="feat-desc">Location-aware tax deduction reports</div></div>
+  </div>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div id="s-auth" class="screen">
+  <div class="masthead">
+    <div class="apex-brand" onclick="go('s-landing')">
+      
+      <div class="apex-wordmark"><div class="apex-name">APEX</div><div class="apex-sub">Technologies</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center"><div class="masthead-divider"></div><div class="product-name-mast">AutoBooks AI</div></div>
+    <div></div>
+  </div>
+  <div class="center-wrap">
+    <div class="card">
+      <div class="card-title">Welcome</div>
+      <div class="card-sub">APEX Technologies · AutoBooks AI Platform</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-su" onclick="authMode('signup')">Create Account</button>
+        <button class="auth-tab" id="tab-li" onclick="authMode('login')">Log In</button>
+      </div>
+      <div id="auth-err" class="msg-err"></div>
+      <div id="auth-ok" class="msg-ok"></div>
+      <div id="f-signup">
+        <div class="field"><label>Full Name</label><input id="su-name" placeholder="Your full name" /></div>
+        <div class="field"><label>Email Address</label><input id="su-email" type="email" placeholder="you@example.com" /></div>
+        <div class="field"><label>Password</label><input id="su-pw" type="password" placeholder="Min. 6 characters" /></div>
+        <button class="big-btn" id="su-btn" onclick="doSignup()">Create My Account →</button>
+        <div class="trial-note">🎉 3-month free trial — no credit card required. Cancel anytime.</div>
+      </div>
+      <div id="f-login" style="display:none">
+        <div class="field"><label>Email Address</label><input id="li-email" type="email" placeholder="you@example.com" /></div>
+        <div class="field"><label>Password</label><input id="li-pw" type="password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <button class="big-btn" id="li-btn" onclick="doLogin()">Log In →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div id="s-onboard" class="screen">
+  <div class="masthead">
+    <div class="apex-brand">
+      
+      <div class="apex-wordmark"><div class="apex-name">APEX</div><div class="apex-sub">Technologies</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--gold3);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase">Setting Up Your Workspace</div>
+    <div></div>
+  </div>
+  <div class="center-wrap">
+    <div class="card" style="max-width:500px">
+      <div class="progress-bar"><div class="progress-fill" id="ob-prog" style="width:20%"></div></div>
+      <div id="ob1">
+        <div class="ob-step-label">Step 1 of 5</div>
+        <div class="ob-title">What kind of business?</div>
+        <div class="ob-sub">Helps AutoBooks AI give you the most relevant insights.</div>
+        <div class="option-grid">
+          <div class="opt" onclick="pick(this,'biz','freelancer')"><div class="opt-icon">💻</div><div class="opt-label">Freelancer</div><div class="opt-desc">Solo, client invoices</div></div>
+          <div class="opt" onclick="pick(this,'biz','small-business')"><div class="opt-icon">🏪</div><div class="opt-label">Small Business</div><div class="opt-desc">Team, products/services</div></div>
+          <div class="opt" onclick="pick(this,'biz','creator')"><div class="opt-icon">🎨</div><div class="opt-label">Creator</div><div class="opt-desc">Brand deals, content</div></div>
+          <div class="opt" onclick="pick(this,'biz','startup')"><div class="opt-icon">🚀</div><div class="opt-label">Startup</div><div class="opt-desc">Growing, investor-ready</div></div>
+        </div>
+        <button class="big-btn" onclick="ob(2)">Continue →</button>
+      </div>
+      <div id="ob2" style="display:none">
+        <div class="ob-step-label">Step 2 of 5</div>
+        <div class="ob-title">Approximate monthly revenue?</div>
+        <div class="ob-sub">Calibrates your dashboard benchmarks.</div>
+        <div class="option-grid">
+          <div class="opt" onclick="pick(this,'rev','0-1k')"><div class="opt-icon">🌱</div><div class="opt-label">Under $1K</div><div class="opt-desc">Just starting out</div></div>
+          <div class="opt" onclick="pick(this,'rev','1k-5k')"><div class="opt-icon">📈</div><div class="opt-label">$1K – $5K</div><div class="opt-desc">Growing steadily</div></div>
+          <div class="opt" onclick="pick(this,'rev','5k-20k')"><div class="opt-icon">💪</div><div class="opt-label">$5K – $20K</div><div class="opt-desc">Established income</div></div>
+          <div class="opt" onclick="pick(this,'rev','20k+')"><div class="opt-icon">🏆</div><div class="opt-label">$20K+</div><div class="opt-desc">Scaling up</div></div>
+        </div>
+        <button class="big-btn" onclick="ob(3)">Continue →</button>
+        <button class="back-btn" onclick="ob(1)">← Back</button>
+      </div>
+      <div id="ob3" style="display:none">
+        <div class="ob-step-label">Step 3 of 5</div>
+        <div class="ob-title">About your business</div>
+        <div class="ob-sub">Personalizes your dashboard and reports.</div>
+        <div class="field"><label>Business Name</label><input id="ob-bname" placeholder="e.g. Apex Creative Studio" /></div>
+        <div class="field"><label>Industry</label>
+          <select id="ob-ind">
+            <option>Design & Creative</option><option>Technology / Software</option><option>Marketing & Advertising</option>
+            <option>Consulting</option><option>E-commerce / Retail</option><option>Content Creation</option>
+            <option>Real Estate</option><option>Health & Wellness</option><option>Finance</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Currency</label>
+          <select id="ob-cur">
+            <option value="USD">USD — US Dollar ($)</option>
+            <option value="EUR">EUR — Euro (€)</option>
+            <option value="GBP">GBP — British Pound (£)</option>
+            <option value="CAD">CAD — Canadian Dollar (C$)</option>
+            <option value="AUD">AUD — Australian Dollar (A$)</option>
+          </select>
+        </div>
+        <button class="big-btn" onclick="ob(4)">Continue →</button>
+        <button class="back-btn" onclick="ob(2)">← Back</button>
+      </div>
+      <div id="ob4" style="display:none">
+        <div class="ob-step-label">Step 4 of 5</div>
+        <div class="ob-title">Where are you located?</div>
+        <div class="ob-sub">Used for jurisdiction-specific tax deduction advice when the AI Advisor is active.</div>
+        <div class="field"><label>Country</label>
+          <select id="ob-country">
+            <option value="US">United States</option><option value="UK">United Kingdom</option>
+            <option value="CA">Canada</option><option value="AU">Australia</option>
+            <option value="EU">European Union</option><option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field" id="ob-state-field"><label>State / Province</label>
+          <select id="ob-state">
+            <option value="">Select state...</option>
+            <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+            <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+            <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+            <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+            <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+            <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+            <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+            <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+            <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+            <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+            <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+            <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+            <option>Wisconsin</option><option>Wyoming</option>
+          </select>
+        </div>
+        <button class="big-btn" onclick="ob(5)">Continue →</button>
+        <button class="back-btn" onclick="ob(3)">← Back</button>
+      </div>
+      <div id="ob5" style="display:none">
+        <div class="ob-step-label">Step 5 of 5</div>
+        <div class="ob-title">You're all set! 🎉</div>
+        <div class="ob-sub">Your dashboard starts clean — add your first transaction and AutoBooks AI immediately begins building your financial picture.</div>
+        <div class="summary-box" id="ob-summary"></div>
+        <div class="trial-note" style="margin-bottom:14px">✅ 3-month free trial active — no charge until Month 4. Cancel anytime.</div>
+        <button class="big-btn" id="ob-launch-btn" onclick="saveProfileAndLaunch()">Launch My Dashboard →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="s-app" class="screen" style="flex-direction:column">
+  <div class="masthead">
+    <div class="apex-brand">
+      
+      <div class="apex-wordmark"><div class="apex-name">APEX</div><div class="apex-sub">Technologies</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center"><div class="masthead-divider"></div><div class="product-name-mast">AutoBooks AI</div></div>
+    <div class="user-pill" onclick="pg('profile',document.querySelectorAll('.tab')[5])">
+      <div class="u-avatar" id="nav-av"><span id="nav-av-text">?</span></div>
+      <span class="u-name" id="nav-nm">User</span>
+    </div>
+  </div>
+  <div class="app-nav">
+    <div class="app-tabs">
+      <button class="tab active" onclick="pg('dashboard',this)">Dashboard</button>
+      <button class="tab" onclick="pg('transactions',this)">Transactions</button>
+      <button class="tab" onclick="pg('advisor',this)">AI Advisor</button>
+      <button class="tab" onclick="pg('reports',this)">Reports</button>
+      <button class="tab" onclick="pg('upgrade',this)">Upgrade</button>
+      <button class="tab" onclick="pg('profile',this)">Profile</button>
+    </div>
+    <div style="font-size:10px;color:var(--gold3);font-family:'DM Mono',monospace;letter-spacing:1.5px;text-transform:uppercase">Free Trial Active</div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">Overview</div>
+        <div class="sb-item active" onclick="pg('dashboard',document.querySelectorAll('.tab')[0])"><span>📊</span> Dashboard</div>
+        <div class="sb-item" onclick="pg('transactions',document.querySelectorAll('.tab')[1])"><span>🧾</span> Transactions</div>
+        <div class="sb-item" onclick="pg('advisor',document.querySelectorAll('.tab')[2])"><span>🤖</span> AI Advisor</div>
+        <div class="sb-item" onclick="pg('reports',document.querySelectorAll('.tab')[3])"><span>📁</span> Reports</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">Account</div>
+        <div class="sb-item" onclick="pg('profile',document.querySelectorAll('.tab')[5])"><span>👤</span> Profile</div>
+        <div class="sb-item" onclick="pg('upgrade',document.querySelectorAll('.tab')[4])"><span>⚡</span> Upgrade</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">Categories</div>
+        <div class="sb-item"><div class="sb-dot" style="background:#C9A84C"></div>Revenue</div>
+        <div class="sb-item"><div class="sb-dot" style="background:#5C9EFF"></div>Software</div>
+        <div class="sb-item"><div class="sb-dot" style="background:#A78BFA"></div>Marketing</div>
+        <div class="sb-item"><div class="sb-dot" style="background:#E74C3C"></div>Operations</div>
+        <div class="sb-item"><div class="sb-dot" style="background:#FFB347"></div>Travel</div>
+      </div>
+      <div style="margin-top:auto;padding:0 4px">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;padding:10px 12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.1);border-radius:var(--radius)">
+          <div style="color:var(--gold);font-weight:700;margin-bottom:4px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase">Trial Active</div>
+          <div>3 months remaining</div>
+          <div style="margin-top:5px;cursor:pointer;color:var(--gold);font-size:10px" onclick="pg('upgrade',document.querySelectorAll('.tab')[4])">Upgrade early →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="dash-hdr"><div><div class="dash-title" id="d-greet">Good morning 👋</div><div class="dash-sub" id="d-bname">Your financial snapshot</div></div></div>
+        <div id="d-empty" class="empty-state">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">Your Dashboard Is Ready</div>
+          <div class="empty-desc">Add your first transaction and AutoBooks AI will immediately start building your financial picture.</div>
+          <button class="btn-gold-lg" onclick="pg('transactions',document.querySelectorAll('.tab')[1])">Add First Transaction →</button>
+        </div>
+        <div id="d-filled" style="display:none">
+          <div class="kpi-grid">
+            <div class="kpi"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val gold-text" id="k-rev">$0</div><div class="kpi-note" id="k-rev-n"></div></div>
+            <div class="kpi"><div class="kpi-lbl">Total Expenses</div><div class="kpi-val dn" id="k-exp">$0</div><div class="kpi-note" id="k-exp-n"></div></div>
+            <div class="kpi"><div class="kpi-lbl">Net Profit</div><div class="kpi-val" id="k-prof">$0</div><div class="kpi-note" id="k-prof-n"></div></div>
+            <div class="kpi"><div class="kpi-lbl">Profit Margin</div><div class="kpi-val" id="k-marg">0%</div><div class="kpi-note" id="k-marg-n"></div></div>
+          </div>
+          <div class="ai-panel">
+            <div class="ai-lbl"><div style="width:5px;height:5px;border-radius:50%;background:var(--gold);animation:blink 2s infinite"></div>AI Insights</div>
+            <div class="ai-ins-list" id="d-insights"></div>
+          </div>
+          <div class="two-col">
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-hdr"><div class="panel-title">Revenue vs Expenses</div></div>
+              <div class="bar-chart" id="bar-chart"></div>
+              <div style="display:flex;gap:12px;margin-top:9px">
+                <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace"><div style="width:8px;height:8px;border-radius:1px;background:var(--gold)"></div>Revenue</div>
+                <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace"><div style="width:8px;height:8px;border-radius:1px;background:var(--surface3);border:1px solid rgba(255,255,255,0.05)"></div>Expenses</div>
+              </div>
+            </div>
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-hdr"><div class="panel-title">By Category</div></div>
+              <div class="cat-list" id="cat-bd"></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-hdr"><div class="panel-title">Recent Transactions</div><span class="panel-action" onclick="pg('transactions',document.querySelectorAll('.tab')[1])">View All →</span></div>
+            <div class="tx-list" id="recent-tx"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="page-transactions" class="page">
+        <div class="dash-hdr"><div><div class="dash-title">Transactions</div><div class="dash-sub">Log every income and expense — saved to your account</div></div></div>
+        <div class="panel">
+          <div class="panel-title" style="margin-bottom:12px">Add Transaction</div>
+          <div class="type-toggle">
+            <button class="type-btn inc-active" id="btn-inc" onclick="setTxType('income')">+ Income</button>
+            <button class="type-btn" id="btn-exp" onclick="setTxType('expense')">− Expense</button>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Description</label><input id="tx-desc" placeholder="e.g. Client invoice #12" /></div>
+            <div class="field"><label>Amount</label><input id="tx-amt" type="number" min="0.01" step="0.01" placeholder="0.00" /></div>
+            <div class="field"><label>Category</label>
+              <select id="tx-cat">
+                <option>Revenue</option><option>Software</option><option>Marketing</option><option>Operations</option>
+                <option>Travel</option><option>Payroll</option><option>Equipment</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Date</label><input id="tx-date" type="date" /></div>
+          </div>
+          <div class="field" style="margin-top:4px"><label>Note (Optional)</label><input id="tx-note" placeholder="Any extra context..." /></div>
+          <button class="submit-btn" id="add-tx-btn" onclick="addTx()">Add Transaction</button>
+        </div>
+        <div class="panel">
+          <div class="panel-hdr"><div class="panel-title">All Transactions</div><span id="tx-count" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace"></span></div>
+          <div class="tx-list" id="all-tx"></div>
+        </div>
+      </div>
+
+      <!-- AI ADVISOR -->
+      <div id="page-advisor" class="page">
+        <div class="dash-hdr"><div><div class="dash-title">AI Financial Advisor</div><div class="dash-sub">Powered by your real transaction data</div></div></div>
+        <div class="advisor-note">⚠️ AI Advisor requires an Anthropic API key to function. Once configured, it will provide location-aware tax advice, 90-day forecasts, and real-time financial analysis based on your actual data.</div>
+        <div class="suggestions" id="chat-sugs">
+          <div class="sug" onclick="sugg('Where am I spending the most money?')">Where am I overspending?</div>
+          <div class="sug" onclick="sugg('Am I currently profitable?')">Am I profitable?</div>
+          <div class="sug" onclick="sugg('What tax deductions apply to my location and business type?')">Tax deductions for my location</div>
+          <div class="sug" onclick="sugg('Give me a 90-day financial projection.')">90-day forecast</div>
+          <div class="sug" onclick="sugg('Generate a full tax report for my business.')">Generate tax report</div>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-msgs" id="chat-msgs">
+            <div class="msg">
+              <div class="msg-av av-ai">AX</div>
+              <div class="bubble b-ai">Welcome. I'm your APEX AI financial advisor. Once your API key is configured I'll have full visibility into your transaction data and provide location-specific tax guidance, forecasts, and real-time analysis. Come back once the key is set up!</div>
+            </div>
+          </div>
+          <div class="chat-in-wrap">
+            <textarea class="chat-in" id="chat-in" rows="1" placeholder="Ask about your finances..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+            <button class="chat-send" onclick="sendChat()">↑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="page-reports" class="page">
+        <div class="dash-hdr"><div><div class="dash-title">Reports</div><div class="dash-sub">Export and analyze your financials</div></div></div>
+        <div class="report-grid">
+          <div class="rcard" onclick="CU&&CU._isPro?showProReport('pl'):pg('upgrade',document.querySelectorAll('.tab')[4])"><div class="rcard-icon">📈</div><div class="rcard-name">Profit & Loss Statement</div><div class="rcard-desc">Full monthly and YTD P&L with revenue and net profit breakdown</div><span class="pro-tag">Pro</span></div>
+          <div class="rcard" onclick="pg('upgrade',document.querySelectorAll('.tab')[4])"><div class="rcard-icon">📋</div><div class="rcard-name">Tax Summary Report</div><div class="rcard-desc">Location-aware deductions — send directly to your accountant</div><span class="pro-tag">Pro</span></div>
+          <div class="rcard" onclick="pg('upgrade',document.querySelectorAll('.tab')[4])"><div class="rcard-icon">💸</div><div class="rcard-name">Expense Deep Dive</div><div class="rcard-desc">Vendor-level breakdown of every dollar spent</div><span class="pro-tag">Pro</span></div>
+          <div class="rcard" onclick="pg('upgrade',document.querySelectorAll('.tab')[4])"><div class="rcard-icon">📅</div><div class="rcard-name">Cash Flow Forecast</div><div class="rcard-desc">AI-projected 90-day cash flow from your patterns</div><span class="pro-tag">Pro</span></div>
+        </div>
+      </div>
+
+      <!-- UPGRADE -->
+      <div id="page-upgrade" class="page">
+        <div class="paywall">
+          <div style="font-size:34px;margin-bottom:12px">⚡</div>
+          <div class="pw-title">Unlock the Full Picture</div>
+          <div class="pw-sub">Everything a growing business needs — built by APEX Technologies.</div>
+          <div class="trial-banner">🎉 3-month free trial active — no charge until Month 4. Cancel anytime.</div>
+          <div class="plan-cards">
+            <div class="plan-card chosen" id="pc-monthly" onclick="selPlan('monthly')">
+              <div class="plan-name">Monthly</div>
+              <div class="plan-price">$8</div>
+              <div class="plan-per">per month after trial</div>
+              <div class="plan-feats">
+                <div class="plan-feat">Unlimited transactions</div>
+                <div class="plan-feat">All AI reports</div>
+                <div class="plan-feat">Location tax reports</div>
+                <div class="plan-feat">Cash flow forecast</div>
+                <div class="plan-feat">Priority AI advisor</div>
+              </div>
+            </div>
+            <div class="plan-card" id="pc-annual" onclick="selPlan('annual')">
+              <div class="plan-badge">Best Value</div>
+              <div class="plan-name">Annual</div>
+              <div class="plan-price">$32</div>
+              <div class="plan-per">per year after trial</div>
+              <div class="plan-feats">
+                <div class="plan-feat">Everything in Monthly</div>
+                <div class="plan-feat">Custom categories</div>
+                <div class="plan-feat">Multi-business support</div>
+                <div class="plan-feat">Dedicated onboarding</div>
+                <div class="plan-feat">Early feature access</div>
+              </div>
+            </div>
+          </div>
+          <button class="stripe-btn" onclick="CU&&CU._isPro?alert('You have full Pro access.'):stripeClick()">Reserve My Plan — Free For 3 Months →</button>
+          <div class="cancel-note">Cancel before Month 4 and you'll never be charged.</div>
+          <div class="secure-note">🔒 Secured by Stripe · APEX Technologies · Prices in USD</div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div id="page-profile" class="page">
+        <div class="dash-hdr"><div><div class="dash-title">Account Profile</div><div class="dash-sub">Manage your personal info, security, and settings</div></div></div>
+
+        <!-- Profile Picture & Basic Info -->
+        <div class="profile-section-full">
+          <div class="ps-title">Personal Information</div>
+          <div class="avatar-upload">
+            <div class="avatar-preview" id="profile-av-preview">
+              <span id="profile-av-text">?</span>
+            </div>
+            <div>
+              <input type="file" id="profile-pic-input" accept="image/*" style="display:none" onchange="handleProfilePic(this)" />
+              <button class="upload-btn" onclick="document.getElementById('profile-pic-input').click()">Upload Photo</button>
+              <div class="upload-hint">JPG, PNG — max 2MB</div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Full Name</label><input id="p-name" placeholder="Your full name" /></div>
+            <div class="field"><label>Email Address</label><input id="p-email" type="email" placeholder="you@example.com" disabled style="opacity:.5;cursor:not-allowed" /></div>
+            <div class="field"><label>Business Name</label><input id="p-bizname" placeholder="Your business name" /></div>
+            <div class="field"><label>Industry</label>
+              <select id="p-industry">
+                <option>Design & Creative</option><option>Technology / Software</option><option>Marketing & Advertising</option>
+                <option>Consulting</option><option>E-commerce / Retail</option><option>Content Creation</option>
+                <option>Real Estate</option><option>Health & Wellness</option><option>Finance</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Country</label>
+              <select id="p-country">
+                <option value="US">United States</option><option value="UK">United Kingdom</option>
+                <option value="CA">Canada</option><option value="AU">Australia</option>
+                <option value="EU">European Union</option><option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field"><label>State / Province</label><input id="p-state" placeholder="e.g. Georgia" /></div>
+            <div class="field"><label>Currency</label>
+              <select id="p-currency">
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="EUR">EUR — Euro (€)</option>
+                <option value="GBP">GBP — British Pound (£)</option>
+                <option value="CAD">CAD — Canadian Dollar (C$)</option>
+                <option value="AUD">AUD — Australian Dollar (A$)</option>
+              </select>
+            </div>
+          </div>
+          <div id="profile-msg-ok" class="msg-ok"></div>
+          <div id="profile-msg-err" class="msg-err"></div>
+          <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+        </div>
+
+        <!-- Company Logo -->
+        <div class="profile-section-full">
+          <div class="ps-title">Company Logo</div>
+          <div class="avatar-upload">
+            <div class="avatar-preview" id="company-logo-preview" style="width:90px;height:90px;border-radius:var(--radius-md)">
+              <span id="company-logo-text">🏢</span>
+            </div>
+            <div>
+              <input type="file" id="company-logo-input" accept="image/*" style="display:none" onchange="handleCompanyLogo(this)" />
+              <button class="upload-btn" onclick="document.getElementById('company-logo-input').click()">Upload Logo</button>
+              <div class="upload-hint">Shown on your reports and exports · JPG, PNG</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="profile-section-full">
+          <div class="ps-title">Security</div>
+          
+          <div style="margin-top:18px;padding-top:18px;border-top:1px solid rgba(201,168,76,0.08)">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:'Rajdhani',sans-serif;margin-bottom:8px">Change Password</div>
+            <div class="form-grid" style="max-width:500px">
+              <div class="field"><label>New Password</label><input type="password" id="p-pw1" placeholder="New password" /></div>
+              <div class="field"><label>Confirm Password</label><input type="password" id="p-pw2" placeholder="Confirm new password" /></div>
+            </div>
+            <button class="save-btn" onclick="changePassword()">Update Password</button>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="danger-zone">
+          <div class="dz-title">⚠️ Danger Zone</div>
+          <div class="dz-desc">Permanently delete your account and all associated data. This action cannot be undone. All your transactions, reports, and profile information will be erased forever.</div>
+          <button class="btn-danger" onclick="openConfirmDelete()">Delete My Account</button>
+        </div>
+
+        <button class="btn-outline-gold" onclick="logout()" style="width:100%;margin-top:4px">Log Out</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ SUPABASE ══
+var SB='https://qzdzeiyijichuvpjnwqr.supabase.co';
+var SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZHplaXlpamljaHV2cGpud3FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODM1MzksImV4cCI6MjA5MjU1OTUzOX0.0C7bN97Z_sGISOYYWB0s6v4uLdtFPNb5jb0zCsuAfDs';
+var SH={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+var SHP=Object.assign({'Prefer':'return=representation'},SH);
+async function sbGet(p){var r=await fetch(SB+p,{headers:SH});return r.json()}
+async function sbPost(p,b){var r=await fetch(SB+p,{method:'POST',headers:SHP,body:JSON.stringify(b)});return r.json()}
+async function sbPatch(p,b){var r=await fetch(SB+p,{method:'PATCH',headers:SHP,body:JSON.stringify(b)});return r.json()}
+async function sbDelete(p){var r=await fetch(SB+p,{method:'DELETE',headers:SH});return r.status}
+
+// ══ STATE ══
+var CU=null,TXS=[],TX_TYPE='income',CHAT_HIST=[],OB={};
+var CSYM={USD:'$',EUR:'€',GBP:'£',CAD:'C$',AUD:'A$'};
+var CICO={Revenue:'💼',Software:'💻',Marketing:'📢',Operations:'⚙️',Travel:'✈️',Payroll:'👥',Equipment:'🖥️',Other:'📌'};
+var CCOL={Revenue:'#C9A84C',Software:'#5C9EFF',Marketing:'#A78BFA',Operations:'#E74C3C',Travel:'#FFB347',Payroll:'#4CAF7D',Equipment:'#FF9A3C',Other:'#666'};
+// ══ SCREENS ══
+function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
+function loading(show,msg){var o=document.getElementById('loading-overlay');o.classList.toggle('show',show);if(msg)document.getElementById('ld-msg').textContent=msg}
+
+// ══ AUTH HELPERS ══
+function authMode(m){
+  var su=m==='signup';
+  document.getElementById('tab-su').classList.toggle('active',su);
+  document.getElementById('tab-li').classList.toggle('active',!su);
+  document.getElementById('f-signup').style.display=su?'block':'none';
+  document.getElementById('f-login').style.display=su?'none':'block';
+  document.getElementById('auth-err').style.display='none';
+  document.getElementById('auth-ok').style.display='none';
+}
+function authErr(msg){var e=document.getElementById('auth-err');e.textContent=msg;e.style.display='block';document.getElementById('auth-ok').style.display='none'}
+function authOk(msg){var e=document.getElementById('auth-ok');e.textContent=msg;e.style.display='block';document.getElementById('auth-err').style.display='none'}
+
+// ══ SIGNUP ══
+async function doSignup(){
+  var name=document.getElementById('su-name').value.trim();
+  var email=document.getElementById('su-email').value.trim().toLowerCase();
+  var pw=document.getElementById('su-pw').value;
+  if(!name){authErr('Please enter your full name.');return}
+  if(!email||!email.includes('@')){authErr('Please enter a valid email.');return}
+  if(pw.length<6){authErr('Password must be at least 6 characters.');return}
+  loading(true,'Creating your account...');
+  document.getElementById('su-btn').disabled=true;
+  try{
+    var ex=await sbGet('/rest/v1/users?email=eq.'+encodeURIComponent(email)+'&select=id');
+    if(ex&&ex.length>0){loading(false);document.getElementById('su-btn').disabled=false;authErr('Account already exists. Please log in.');return}
+    var res=await sbPost('/rest/v1/users',{name:name,email:email,password:pw,biz_name:'',biz_type:'',industry:'',currency:'USD',revenue_range:'',location:'',transactions:[],profile_pic:'',company_logo:'',phone:''});
+    if(!res||res.error){loading(false);document.getElementById('su-btn').disabled=false;authErr('Sign up failed: '+(res&&res.message||'Please try again.'));return}
+    CU=Array.isArray(res)?res[0]:res;
+    TXS=[];OB={};
+    loading(false);
+    showOb(1);go('s-onboard');
+  }catch(e){loading(false);document.getElementById('su-btn').disabled=false;authErr('Connection error. Check your internet.');console.error(e)}
+}
+
+// ══ LOGIN ══
+async function doLogin(){
+  var email=document.getElementById('li-email').value.trim().toLowerCase();
+  var pw=document.getElementById('li-pw').value;
+  if(!email){authErr('Please enter your email.');return}
+  if(!pw){authErr('Please enter your password.');return}
+  loading(true,'Signing you in...');
+  document.getElementById('li-btn').disabled=true;
+  try{
+    var rows=await sbGet('/rest/v1/users?email=eq.'+encodeURIComponent(email)+'&select=*');
+    if(!rows||rows.length===0){loading(false);document.getElementById('li-btn').disabled=false;authErr('No account found. Please sign up.');return}
+    var user=rows[0];
+    if(user.password!==pw){loading(false);document.getElementById('li-btn').disabled=false;authErr('Incorrect password.');return}
+    document.getElementById('li-btn').disabled=false;
+    loading(false);
+    CU=user;TXS=Array.isArray(user.transactions)?user.transactions:[];CHAT_HIST=[];
+    // Grant full pro access to owner account
+    if(email==='abhi.nimmala@gmail.com') CU._isPro=true;
+    launchApp();
+  }catch(e){loading(false);document.getElementById('li-btn').disabled=false;authErr('Connection error.');console.error(e)}
+}
+
+// ══ 2FA ══
+
+
+
+
+
+
+// ══ ONBOARDING ══
+function showOb(n){
+  [1,2,3,4,5].forEach(function(i){var el=document.getElementById('ob'+i);if(el)el.style.display=i===n?'block':'none'});
+  document.getElementById('ob-prog').style.width=(n*20)+'%';
+}
+function ob(n){
+  if(n===2&&!OB.biz){alert('Please select your business type.');return}
+  if(n===3&&!OB.rev){alert('Please select your revenue range.');return}
+  if(n===4){var bn=document.getElementById('ob-bname').value.trim();if(!bn){alert('Please enter your business name.');return}OB.bizName=bn;OB.industry=document.getElementById('ob-ind').value;OB.currency=document.getElementById('ob-cur').value}
+  if(n===5){
+    OB.country=document.getElementById('ob-country').value;
+    OB.state=document.getElementById('ob-state').value;
+    OB.location=OB.state?OB.state+', '+OB.country:OB.country;
+    document.getElementById('ob-summary').innerHTML='Name: '+CU.name+'<br>Business: '+OB.bizName+'<br>Type: '+OB.biz+'<br>Industry: '+OB.industry+'<br>Location: '+OB.location+'<br>Currency: '+OB.currency+'<br>Trial: 3 months free ✓';
+  }
+  showOb(n);
+}
+function pick(el,key,val){el.parentNode.querySelectorAll('.opt').forEach(function(o){o.classList.remove('chosen')});el.classList.add('chosen');OB[key]=val}
+
+async function saveProfileAndLaunch(){
+  loading(true,'Saving your profile...');
+  document.getElementById('ob-launch-btn').disabled=true;
+  try{
+    var up=await sbPatch('/rest/v1/users?id=eq.'+CU.id,{biz_name:OB.bizName||'',biz_type:OB.biz||'',industry:OB.industry||'',currency:OB.currency||'USD',revenue_range:OB.rev||'',location:OB.location||''});
+    if(Array.isArray(up)&&up[0]) CU=up[0];
+    else{CU.biz_name=OB.bizName;CU.biz_type=OB.biz;CU.industry=OB.industry;CU.currency=OB.currency;CU.location=OB.location}
+    loading(false);launchApp();
+  }catch(e){loading(false);document.getElementById('ob-launch-btn').disabled=false;alert('Error saving. Try again.');console.error(e)}
+}
+
+// ══ LAUNCH ══
+function launchApp(){
+  var ini=CU.name.split(' ').map(function(w){return w[0]||''}).join('').slice(0,2).toUpperCase();
+  // Nav avatar
+  var navAv=document.getElementById('nav-av');
+  if(CU.profile_pic){navAv.innerHTML='<img src="'+CU.profile_pic+'" style="width:100%;height:100%;object-fit:cover;border-radius:2px" />'}
+  else{document.getElementById('nav-av-text').textContent=ini}
+  document.getElementById('nav-nm').textContent=CU.name.split(' ')[0];
+  if(CU._isPro){
+    // Update trial badge to PRO in sidebar
+    var trialEl=document.querySelector('.sidebar .sb-section:last-child div');
+    if(trialEl) trialEl.innerHTML='<div style="color:var(--gold);font-weight:700;margin-bottom:4px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase">PRO ACCOUNT</div><div style="color:var(--text2);font-size:10px">Full access enabled</div>';
+    // Update app-nav trial text
+    var trialNav=document.querySelector('.app-nav div[style*="gold3"]');
+    if(trialNav) trialNav.textContent='Pro Account Active';
+  }
+  var h=new Date().getHours();
+  document.getElementById('d-greet').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+CU.name.split(' ')[0]+' 👋';
+  document.getElementById('d-bname').textContent=(CU.biz_name||'Your business')+' · Financial snapshot';
+  var td=document.getElementById('tx-date');if(td) td.value=new Date().toISOString().split('T')[0];
+  CHAT_HIST=[];
+  populateProfilePage();
+  renderDash();renderAllTx();
+  pg('dashboard',document.querySelectorAll('.tab')[0]);
+  go('s-app');
+}
+
+// ══ PAGE NAV ══
+function pg(name,tabEl){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.sb-item').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('page-'+name).classList.add('active');
+  if(tabEl) tabEl.classList.add('active');
+  if(name==='dashboard') renderDash();
+  if(name==='advisor') initAdvisor();
+}
+
+// ══ HELPERS ══
+function sym(){return CSYM[(CU&&CU.currency)||'USD']||'$'}
+function fmt(n){return Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})}
+
+// ══ PROFILE PAGE ══
+function populateProfilePage(){
+  if(!CU) return;
+  document.getElementById('p-name').value=CU.name||'';
+  document.getElementById('p-email').value=CU.email||'';
+  document.getElementById('p-bizname').value=CU.biz_name||'';
+  document.getElementById('p-state').value=CU.location||'';
+  // Set profile pic
+  var prev=document.getElementById('profile-av-preview');
+  if(CU.profile_pic){prev.innerHTML='<img src="'+CU.profile_pic+'" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md)" />'}
+  else{document.getElementById('profile-av-text').textContent=CU.name.split(' ').map(function(w){return w[0]||''}).join('').slice(0,2).toUpperCase()}
+  // Company logo
+  var cprev=document.getElementById('company-logo-preview');
+  if(CU.company_logo){cprev.innerHTML='<img src="'+CU.company_logo+'" style="width:100%;height:100%;object-fit:contain;border-radius:var(--radius-md)" />'}
+  // Select fields
+  try{document.getElementById('p-industry').value=CU.industry||'Design & Creative'}catch(e){}
+  try{document.getElementById('p-currency').value=CU.currency||'USD'}catch(e){}
+  try{document.getElementById('p-country').value=CU.country||'US'}catch(e){}
+}
+
+function handleProfilePic(input){
+  var file=input.files[0];if(!file) return;
+  if(file.size>2*1024*1024){alert('Image must be under 2MB.');return}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result;
+    document.getElementById('profile-av-preview').innerHTML='<img src="'+b64+'" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md)" />';
+    CU._newProfilePic=b64;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleCompanyLogo(input){
+  var file=input.files[0];if(!file) return;
+  if(file.size>2*1024*1024){alert('Image must be under 2MB.');return}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result;
+    document.getElementById('company-logo-preview').innerHTML='<img src="'+b64+'" style="width:100%;height:100%;object-fit:contain;border-radius:var(--radius-md)" />';
+    CU._newCompanyLogo=b64;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveProfile(){
+  var ok=document.getElementById('profile-msg-ok');
+  var err=document.getElementById('profile-msg-err');
+  ok.style.display='none';err.style.display='none';
+  var name=document.getElementById('p-name').value.trim();
+  var bizname=document.getElementById('p-bizname').value.trim();
+  var industry=document.getElementById('p-industry').value;
+  var currency=document.getElementById('p-currency').value;
+  var country=document.getElementById('p-country').value;
+  var state=document.getElementById('p-state').value.trim();
+  if(!name){err.textContent='Name cannot be empty.';err.style.display='block';return}
+  var payload={name:name,biz_name:bizname,industry:industry,currency:currency,location:state?state+', '+country:country};
+  if(CU._newProfilePic) payload.profile_pic=CU._newProfilePic;
+  if(CU._newCompanyLogo) payload.company_logo=CU._newCompanyLogo;
+  try{
+    var res=await sbPatch('/rest/v1/users?id=eq.'+CU.id,payload);
+    if(Array.isArray(res)&&res[0]) CU=Object.assign(CU,res[0]);
+    else Object.assign(CU,payload);
+    // Update nav
+    var ini=CU.name.split(' ').map(function(w){return w[0]||''}).join('').slice(0,2).toUpperCase();
+    var navAv=document.getElementById('nav-av');
+    if(CU.profile_pic){navAv.innerHTML='<img src="'+CU.profile_pic+'" style="width:100%;height:100%;object-fit:cover;border-radius:2px" />'}
+    else{document.getElementById('nav-av-text').textContent=ini}
+    document.getElementById('nav-nm').textContent=CU.name.split(' ')[0];
+  if(CU._isPro){
+    // Update trial badge to PRO in sidebar
+    var trialEl=document.querySelector('.sidebar .sb-section:last-child div');
+    if(trialEl) trialEl.innerHTML='<div style="color:var(--gold);font-weight:700;margin-bottom:4px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase">PRO ACCOUNT</div><div style="color:var(--text2);font-size:10px">Full access enabled</div>';
+    // Update app-nav trial text
+    var trialNav=document.querySelector('.app-nav div[style*="gold3"]');
+    if(trialNav) trialNav.textContent='Pro Account Active';
+  }
+    ok.textContent='Profile saved successfully.';ok.style.display='block';
+  }catch(e){err.textContent='Error saving profile. Try again.';err.style.display='block';console.error(e)}
+}
+
+async function changePassword(){
+  var pw1=document.getElementById('p-pw1').value;
+  var pw2=document.getElementById('p-pw2').value;
+  var ok=document.getElementById('profile-msg-ok');
+  var err=document.getElementById('profile-msg-err');
+  ok.style.display='none';err.style.display='none';
+  if(!pw1){err.textContent='Please enter a new password.';err.style.display='block';return}
+  if(pw1.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
+  if(pw1!==pw2){err.textContent='Passwords do not match.';err.style.display='block';return}
+  try{
+    await sbPatch('/rest/v1/users?id=eq.'+CU.id,{password:pw1});
+    CU.password=pw1;
+    document.getElementById('p-pw1').value='';document.getElementById('p-pw2').value='';
+    ok.textContent='Password updated successfully.';ok.style.display='block';
+  }catch(e){err.textContent='Error updating password.';err.style.display='block';console.error(e)}
+}
+
+// ══ DELETE ACCOUNT ══
+function openConfirmDelete(){
+  document.getElementById('confirm-pw').value='';
+  document.getElementById('confirm-err').style.display='none';
+  document.getElementById('confirm-modal').classList.add('show');
+}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('show')}
+
+async function confirmDelete(){
+  var pw=document.getElementById('confirm-pw').value;
+  var err=document.getElementById('confirm-err');
+  if(!pw){err.textContent='Please enter your password.';err.style.display='block';return}
+  if(pw!==CU.password){err.textContent='Incorrect password.';err.style.display='block';return}
+  loading(true,'Deleting your account...');
+  try{
+    await sbDelete('/rest/v1/users?id=eq.'+CU.id);
+    CU=null;TXS=[];CHAT_HIST=[];
+    closeConfirm();loading(false);
+    alert('Your account has been permanently deleted. We\'re sorry to see you go.');
+    go('s-landing');
+  }catch(e){loading(false);err.textContent='Error deleting account. Try again.';err.style.display='block';console.error(e)}
+}
+
+function logout(){if(!confirm('Log out of AutoBooks AI?'))return;CU=null;TXS=[];CHAT_HIST=[];go('s-landing')}
+
+// ══ DASHBOARD ══
+function renderDash(){
+  var txs=TXS||[];
+  var empty=txs.length===0;
+  document.getElementById('d-empty').style.display=empty?'block':'none';
+  document.getElementById('d-filled').style.display=empty?'none':'block';
+  if(empty) return;
+  var inc=txs.filter(function(t){return t.type==='income'}).reduce(function(s,t){return s+Number(t.amt)},0);
+  var exp=txs.filter(function(t){return t.type==='expense'}).reduce(function(s,t){return s+Number(t.amt)},0);
+  var prf=inc-exp;var marg=inc>0?Math.round((prf/inc)*100):0;var s=sym();
+  document.getElementById('k-rev').textContent=s+fmt(inc);
+  document.getElementById('k-exp').textContent=s+fmt(exp);
+  document.getElementById('k-prof').textContent=s+fmt(prf);
+  document.getElementById('k-prof').className='kpi-val '+(prf>=0?'up':'dn');
+  document.getElementById('k-marg').textContent=marg+'%';
+  document.getElementById('k-marg').className='kpi-val '+(marg>30?'up':marg<0?'dn':'');
+  document.getElementById('k-rev-n').textContent=txs.filter(function(t){return t.type==='income'}).length+' income entries';
+  document.getElementById('k-exp-n').textContent=txs.filter(function(t){return t.type==='expense'}).length+' expense entries';
+  document.getElementById('k-prof-n').textContent=prf>=0?'Profitable ✓':'Net loss';
+  document.getElementById('k-prof-n').className='kpi-note '+(prf>=0?'up':'dn');
+  document.getElementById('k-marg-n').textContent=txs.length+' transactions logged';
+  var ins=[];
+  if(prf>0) ins.push('You are profitable with a '+marg+'% margin. '+(marg>50?'Excellent — keep it up.':'Room to improve by reducing top expenses.'));
+  else ins.push('Operating at a net loss of '+s+fmt(Math.abs(prf))+'. Focus on increasing revenue or cutting top expense categories.');
+  var cats={};txs.filter(function(t){return t.type==='expense'}).forEach(function(t){cats[t.cat]=(cats[t.cat]||0)+Number(t.amt)});
+  var scat=Object.entries(cats).sort(function(a,b){return b[1]-a[1]});
+  if(scat.length>0) ins.push('Largest expense: '+scat[0][0]+' at '+s+fmt(scat[0][1])+'.'+(scat[0][1]>inc*0.3?' Over 30% of revenue — worth auditing.':' Healthy relative to revenue.'));
+  if(txs.length>=3) ins.push('With '+txs.length+' transactions, the AI Advisor is ready for deeper analysis and tax deduction guidance once your API key is configured.');
+  document.getElementById('d-insights').innerHTML=ins.slice(0,3).map(function(i){return '<div class="ai-ins"><div class="ai-dot"></div>'+i+'</div>'}).join('');
+  var chart=document.getElementById('bar-chart');
+  var mm={};txs.forEach(function(t){var d=new Date(t.date);var k=d.getFullYear()+'-'+d.getMonth();var lbl=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];if(!mm[k])mm[k]={lbl:lbl,inc:0,exp:0};if(t.type==='income')mm[k].inc+=Number(t.amt);else mm[k].exp+=Number(t.amt)});
+  var months=Object.values(mm).slice(-6);
+  var maxV=Math.max.apply(null,months.map(function(m){return Math.max(m.inc,m.exp)}))||1;
+  chart.innerHTML=months.map(function(m){return '<div class="bg"><div class="bw"><div class="b inc" style="height:'+Math.round(m.inc/maxV*72)+'px"></div><div class="b exp" style="height:'+Math.round(m.exp/maxV*72)+'px"></div></div><span class="b-lbl">'+m.lbl+'</span></div>'}).join('');
+  var catEl=document.getElementById('cat-bd');
+  if(!scat.length){catEl.innerHTML='<div style="color:var(--text3);font-size:11px;font-family:\'DM Mono\',monospace;padding:6px 0">No expenses yet</div>'}
+  else{var mx=scat[0][1];catEl.innerHTML=scat.slice(0,5).map(function(e){var pct=Math.round((e[1]/mx)*100);return '<div class="cat-item"><div class="cat-row"><span class="cat-name">'+e[0]+'</span><span class="cat-amt">'+s+fmt(e[1])+'</span></div><div class="cat-bar-bg"><div class="cat-fill" style="width:'+pct+'%;background:'+(CCOL[e[0]]||'#888')+'"></div></div></div>'}).join('')}
+  document.getElementById('recent-tx').innerHTML=txs.slice(0,5).map(txHTML).join('')||'<div style="color:var(--text3);font-size:11px;padding:8px">None yet</div>';
+}
+
+// ══ TRANSACTIONS ══
+function setTxType(t){TX_TYPE=t;document.getElementById('btn-inc').className='type-btn'+(t==='income'?' inc-active':'');document.getElementById('btn-exp').className='type-btn'+(t==='expense'?' exp-active':'')}
+async function addTx(){
+  var desc=document.getElementById('tx-desc').value.trim();
+  var amt=parseFloat(document.getElementById('tx-amt').value);
+  var cat=document.getElementById('tx-cat').value;
+  var date=document.getElementById('tx-date').value;
+  var note=document.getElementById('tx-note').value.trim();
+  if(!desc){alert('Please enter a description.');return}
+  if(!amt||amt<=0){alert('Please enter a valid amount.');return}
+  var tx={id:Date.now(),desc:desc,amt:amt,cat:cat,type:TX_TYPE,date:date||new Date().toISOString().split('T')[0],note:note,icon:CICO[cat]||'📌'};
+  TXS.unshift(tx);
+  var btn=document.getElementById('add-tx-btn');btn.disabled=true;btn.textContent='Saving...';
+  try{await sbPatch('/rest/v1/users?id=eq.'+CU.id,{transactions:TXS})}catch(e){console.error(e)}
+  btn.disabled=false;btn.textContent='Add Transaction';
+  document.getElementById('tx-desc').value='';document.getElementById('tx-amt').value='';document.getElementById('tx-note').value='';
+  renderAllTx();renderDash();
+}
+function txHTML(tx){var s=sym();return '<div class="tx-item"><div class="tx-icon" style="background:'+(tx.type==='income'?'rgba(201,168,76,0.1)':'rgba(231,76,60,0.08)')+'">'+tx.icon+'</div><div class="tx-info"><div class="tx-name">'+tx.desc+'</div><div class="tx-cat">'+tx.cat+' · <span class="tag '+(tx.type==='income'?'tag-in':'tag-ex')+'">'+tx.type+'</span></div></div><div style="text-align:right"><div class="tx-amt" style="color:'+(tx.type==='income'?'var(--gold)':'var(--red)')+'">'+( tx.type==='income'?'+':'−')+s+fmt(Number(tx.amt))+'</div><div class="tx-date">'+tx.date+'</div></div></div>'}
+function renderAllTx(){var el=document.getElementById('all-tx'),cnt=document.getElementById('tx-count');el.innerHTML=TXS.length?TXS.map(txHTML).join(''):'<div style="color:var(--text3);font-size:12px;font-family:\'DM Mono\',monospace;padding:20px;text-align:center">No transactions yet. Add your first one above.</div>';if(cnt) cnt.textContent=TXS.length+' transaction'+(TXS.length!==1?'s':'')}
+
+// ══ AI ADVISOR ══
+function initAdvisor(){if(CHAT_HIST.length===0){var fn=CU?CU.name.split(' ')[0]:'there';document.getElementById('chat-msgs').innerHTML='<div class="msg"><div class="msg-av av-ai">AX</div><div class="bubble b-ai">Welcome, '+fn+'. Once your Anthropic API key is configured I\'ll provide real-time financial analysis, location-specific tax reports for '+((CU&&CU.location)||'your region')+', 90-day forecasts, and more — all based on your actual transaction data.</div></div>';document.getElementById('chat-sugs').style.display='flex'}}
+function sugg(msg){document.getElementById('chat-sugs').style.display='none';document.getElementById('chat-in').value=msg;sendChat()}
+async function sendChat(){
+  var input=document.getElementById('chat-in');var msg=input.value.trim();if(!msg) return;
+  input.value='';document.getElementById('chat-sugs').style.display='none';
+  addBubble(msg,'user');
+  var tid=addTyping();CHAT_HIST.push({role:'user',content:msg});
+  setTimeout(function(){
+    removeTyping(tid);
+    addBubble('The AI Advisor requires an Anthropic API key to function. Once you add your API key, I\'ll be able to answer this and provide location-specific tax guidance for '+(CU&&CU.location||'your region')+'.','ai');
+    CHAT_HIST.push({role:'assistant',content:'API key required.'});
+  },800);
+}
+function addBubble(text,role){var c=document.getElementById('chat-msgs');var ini=CU?CU.name.split(' ').map(function(w){return w[0]||''}).join('').slice(0,2).toUpperCase():'U';var d=document.createElement('div');d.className='msg'+(role==='user'?' user':'');d.innerHTML='<div class="msg-av '+(role==='ai'?'av-ai':'av-user')+'">'+(role==='ai'?'AX':ini)+'</div><div class="bubble '+(role==='ai'?'b-ai':'b-user')+'">'+text.replace(/\n/g,'<br>')+'</div>';c.appendChild(d);c.scrollTop=c.scrollHeight}
+function addTyping(){var c=document.getElementById('chat-msgs');var id='typ-'+Date.now();var d=document.createElement('div');d.className='msg';d.id=id;d.innerHTML='<div class="msg-av av-ai">AX</div><div class="bubble b-ai"><div class="typing"><span></span><span></span><span></span></div></div>';c.appendChild(d);c.scrollTop=c.scrollHeight;return id}
+function removeTyping(id){var el=document.getElementById(id);if(el) el.remove()}
+
+// ══ UPGRADE ══
+function selPlan(p){document.getElementById('pc-monthly').classList.toggle('chosen',p==='monthly');document.getElementById('pc-annual').classList.toggle('chosen',p==='annual')}
+function stripeClick(){alert('Plan reserved! Once you connect Stripe, users will be automatically charged after their 3-month trial ends.')}
+function showProReport(type){
+  // Pro reports placeholder — fully unlocked for owner account
+  var titles={pl:'Profit & Loss Statement',tax:'Tax Summary Report',expense:'Expense Deep Dive',cashflow:'Cash Flow Forecast'};
+  var txs=TXS||[];
+  var inc=txs.filter(function(t){return t.type==='income'}).reduce(function(s,t){return s+Number(t.amt)},0);
+  var exp=txs.filter(function(t){return t.type==='expense'}).reduce(function(s,t){return s+Number(t.amt)},0);
+  var prf=inc-exp;var s=sym();
+  var cats={};txs.filter(function(t){return t.type==='expense'}).forEach(function(t){cats[t.cat]=(cats[t.cat]||0)+Number(t.amt)});
+  var catLines=Object.entries(cats).sort(function(a,b){return b[1]-a[1]}).map(function(e){return e[0]+': '+s+fmt(e[1])}).join('\n');
+  alert('--- '+titles[type]+' ---\n\nBusiness: '+(CU.biz_name||'Your Business')+'\nLocation: '+(CU.location||'Not set')+'\n\nTotal Revenue: '+s+fmt(inc)+'\nTotal Expenses: '+s+fmt(exp)+'\nNet Profit: '+s+fmt(prf)+'\nProfit Margin: '+(inc>0?Math.round((prf/inc)*100):0)+'%\n\nExpense Breakdown:\n'+catLines+'\n\n(Full PDF export coming with Stripe integration)');
+}
+
+// ══ COUNTRY TOGGLE ══
+document.getElementById('ob-country').addEventListener('change',function(){
+  document.getElementById('ob-state-field').style.display=this.value==='US'?'block':'none';
+});
+</script>
+</body>
+</html>
